@@ -1,34 +1,44 @@
 from flask import Flask, request, jsonify
-import os
 import requests
 
 app = Flask(__name__)
 
 CALENDLY_TOKEN = "Bearer eyJraWQiOiIxY2UxZTEzNjE3ZGNmNzY2YjNjZWJjY2Y4ZGM1YmFmYThhNjVlNjg0MDIzZjdjMzJiZTgzNDliMjM4MDEzNWI0IiwidHlwIjoiUEFUIiwiYWxnIjoiRVMyNTYifQ.eyJpc3MiOiJodHRwczovL2F1dGguY2FsZW5kbHkuY29tIiwiaWF0IjoxNzQ5NDY3NzExLCJqdGkiOiJmOGZiMDg1OS1jMTljLTRkYmItYmU5Ny0yNTA1NjQ5YjM1YmMiLCJ1c2VyX3V1aWQiOiJlMDg5ZmEzZC1lZTNiLTQ3NjItODU2OC1mYzhhNDk0MjdmZTgifQ.DAd_7_DcwPrReBDcJSh7eqgH-Is5174Be4QLd7UwwsI6RfPFsYsknpjOqFJCVVs1ybHmHculj8phCP0FhITvbQ"
+EVENT_TYPE_URI = "https://api.calendly.com/event_types/fb6f416b-ea8a-4049-80d8-d924fd0d57e1"
 
 headers = {
     "Authorization": CALENDLY_TOKEN,
     "Content-Type": "application/json"
 }
 
-@app.route("/api/event-types", methods=["GET"])
-def get_event_types():
-    # 1. Aflăm user-ul curent
-    user_resp = requests.get("https://api.calendly.com/users/me", headers=headers)
-    if user_resp.status_code != 200:
-        return jsonify({"error": "Nu s-a putut obține user-ul"}), 400
+@app.route("/api/create-booking", methods=["POST"])
+def create_booking():
+    data = request.get_json()
 
-    user_uri = user_resp.json()["resource"]["uri"]
+    name = data.get("name")
+    email = data.get("email")
+    datetime = data.get("datetime")  # format ISO 8601 ex: 2025-06-11T14:00:00Z
 
-    # 2. Luăm lista event types
-    events_resp = requests.get(f"https://api.calendly.com/event_types?user={user_uri}", headers=headers)
-    if events_resp.status_code != 200:
-        return jsonify({"error": "Nu s-au putut obține tipurile de întâlniri"}), 400
+    if not all([name, email, datetime]):
+        return jsonify({"status": "error", "message": "Lipsesc datele necesare"}), 400
 
-    event_types = events_resp.json()["collection"]
-    simplified = [
-        {"name": e["name"], "uri": e["uri"], "duration": e.get("duration", "N/A")}
-        for e in event_types
-    ]
+    payload = {
+        "event_type": EVENT_TYPE_URI,
+        "invitee": {
+            "email": email,
+            "name": name
+        },
+        "start_time": datetime
+    }
 
-    return jsonify(simplified)
+    response = requests.post("https://api.calendly.com/scheduled_events", headers=headers, json=payload)
+
+    if response.status_code == 201:
+        result = response.json()["resource"]
+        return jsonify({
+            "status": "success",
+            "confirmation_url": result.get("uri"),
+            "message": "✅ Programarea a fost creată cu succes!"
+        })
+
+    return jsonify({"status": "error", "details": response.text}), 400
