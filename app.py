@@ -1,28 +1,28 @@
 from flask import Flask, request, jsonify
-import requests
+import os
 
 app = Flask(__name__)
 
-CALENDLY_TOKEN = "Bearer eyJraWQiOiIxY2UxZTEzNjE3ZGNmNzY2YjNjZWJjY2Y4ZGM1YmFmYThhNjVlNjg0MDIzZjdjMzJiZTgzNDliMjM4MDEzNWI0IiwidHlwIjoiUEFUIiwiYWxnIjoiRVMyNTYifQ.eyJpc3MiOiJodHRwczovL2F1dGguY2FsZW5kbHkuY29tIiwiaWF0IjoxNzQ5NDY3NzExLCJqdGkiOiJmOGZiMDg1OS1jMTljLTRkYmItYmU5Ny0yNTA1NjQ5YjM1YmMiLCJ1c2VyX3V1aWQiOiJlMDg5ZmEzZC1lZTNiLTQ3NjItODU2OC1mYzhhNDk0MjdmZTgifQ.DAd_7_DcwPrReBDcJSh7eqgH-Is5174Be4QLd7UwwsI6RfPFsYsknpjOqFJCVVs1ybHmHculj8phCP0FhITvbQ"
-EVENT_TYPE = "https://calendly.com/emanuel-istrate-kw/30min"
+# Tokenul și URI-ul evenimentului pot fi puse mai târziu în variabile de mediu pentru securitate
+CALENDLY_TOKEN = "Bearer INSERT_TOKEN_AICI"
+EVENT_TYPE = "https://api.calendly.com/event_types/INSERT_EVENT_URI"
 
 @app.route("/api/create-booking", methods=["POST"])
 def create_booking():
-    data = request.json
-    name = data["name"]
-    email = data["email"]
-    datetime = data["datetime"]
+    data = request.get_json()
 
-    # Aici ar trebui să folosești scheduling link sau verifici sloturi
-    # Exemplu de răspuns generic (de test)
+    name = data.get("name")
+    email = data.get("email")
+    datetime = data.get("datetime")
+
+    # Pentru început, doar returnăm un răspuns de test
     return jsonify({
         "status": "success",
-        "confirmation_url": "https://calendly.com/YOUR_USERNAME"
+        "confirmation_url": "https://calendly.com/nume-utilizator",
+        "message": f"Am primit cererea pentru {name} la {datetime} cu emailul {email}"
     })
 
-import os
-
+# Configurare corectă pentru Render (folosește portul din variabilele de mediu)
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
-
