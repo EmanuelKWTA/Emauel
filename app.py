@@ -18,7 +18,7 @@ def create_booking():
     # Pentru început, doar returnăm un răspuns de test
     return jsonify({
         "status": "success",
-        "confirmation_url": "https://calendly.com/nume-utilizator",
+        "confirmation_url": "https://calendly.com/emanuel-istrate-kw/30min",
         "message": f"Am primit cererea pentru {name} la {datetime} cu emailul {email}"
     })
 
